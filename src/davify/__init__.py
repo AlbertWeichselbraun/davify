@@ -13,6 +13,7 @@ from random import choice
 
 import easywebdav
 from davify import keyring
+from davify.transform import int_to_letters, letters_to_int
 
 INT_TO_CHR = ascii_lowercase + ascii_uppercase + digits + "_-"
 APPLICATION_NAME = 'davify'
