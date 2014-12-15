@@ -2,52 +2,25 @@
 
 '''
 davify - uploads files to a webdav server for retrieval via https
+
 '''
 
 
 from argparse import ArgumentParser
 from time import strftime
-from string import ascii_lowercase, ascii_uppercase, digits
 from os.path import splitext, basename, join as os_join
 from random import choice
+import gtk
 
 import easywebdav
 from davify import keyring
-from davify.transform import int_to_letters, letters_to_int
+from davify.transform import int_to_letters, letters_to_int, INT_TO_CHR
+from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, MESSAGE
 
-INT_TO_CHR = ascii_lowercase + ascii_uppercase + digits + "_-"
 APPLICATION_NAME = 'davify'
-
 get_version_suffix = lambda: strftime("-%d%b-%I%M%p").lower()
 
-def int_to_letters(i):
-    '''
-    converts an integer between 0 and 4096 to a two letter
-    string which is then base64 encoded.
-    '''
-    assert i < 4096
-    low, high = i % 64, i // 64
-    return INT_TO_CHR[high] + INT_TO_CHR[low]
-
-def letters_to_int(s):
-    ''' converts a two letter combination to an integer '''
-    assert len(s) == 2
-    low, high = INT_TO_CHR.index(s[1]), INT_TO_CHR.index(s[0])
-    return 64*high + low
-
-
-def test_int_to_letters():
-    from random import randint
-
-    assert int_to_letters(0) == 'aa'
-    assert int_to_letters(4095) == '--'
-
-    for no in xrange(16):
-        i = randint(0, 4095)
-        assert i == letters_to_int(int_to_letters(i))
-
-
-def get_file_name(fname, suggested_lifetime, version_suffix=''):
+def get_file_name_dict(fname, suggested_lifetime, version_suffix=''):
     '''
     ::param fname:
         name of the file to davify
@@ -72,10 +45,14 @@ def get_file_name(fname, suggested_lifetime, version_suffix=''):
     lifetime_str  = int_to_letters(suggested_lifetime)
     fname, ext    = splitext(basename(fname))
 
-    return "%s%s-%s%s%s" % (random_prefix, lifetime_str, fname,
-                           version_suffix, ext)
+    return {'random_prefix' : random_prefix,
+            'lifetime_str'  : lifetime_str,
+            'fname'         : fname,
+            'version_suffix': version_suffix,
+            'ext'           : ext}
 
-def upload(local_fname, lifetime):
+
+def upload(local_fname, lifetime, webdav_file_pattern, file_url_pattern):
     ''' uploads the given file to the webdav server :) 
     
     ::param local_fname:
@@ -89,10 +66,29 @@ def upload(local_fname, lifetime):
                                 username=file_storage.username,
                                 password=file_storage.password,
                                 protocol=file_storage.protocol)
+    file_url_dict = get_file_name_dict(local_fname, lifetime, get_version_suffix())
+    file_url_dict['protocol'] = file_storage.protocol
+    file_url_dict['file_server'] = file_storage.server
+    file_url_dict['file_path'] = file_storage.path
+    file_url_dict['hours'] = lifetime
+    file_url_dict['url'] = file_url_pattern.format(**file_url_dict)
+
     remote_fname = os_join(file_storage.path,
-                           get_file_name(local_fname, lifetime, get_version_suffix()))
+                           webdav_file_pattern.format(**file_url_dict))
     webdav.upload(local_fname, remote_fname)
-    print remote_fname
+    return file_url_dict
+
+def print_notification_message(notification_message, file_url_dict):
+    '''
+    prints the notification message based on the file_url_dict
+    '''
+    msg = notification_message.format(**file_url_dict).replace("\\n", "\n")
+    print(msg)
+
+    # and send it to the clipboard :)
+    clipboard = gtk.clipboard_get()
+    clipboard.set_text(msg)
+    clipboard.store()
 
 
 def parse_arguments():
@@ -100,6 +96,8 @@ def parse_arguments():
     parser.add_argument("fname", help="File to davify.", default=None)
     parser.add_argument("--lifetime", help="Suggested file lifetime in hours (default: 1 week).", default=168)
     parser.add_argument("--retrieval-url-pattern", help="Pattern to use for the retrieval URL.")
+    parser.add_argument("--webdav-file-pattern", help="Pattern used to create the webdav file.", default=FILENAME_PATTERN)
+    parser.add_argument("--file-url-pattern", help="Patterns used to retrieve the created file", default=FILE_URL_PATTERN)
     return parser.parse_args()
 
 
@@ -109,5 +107,6 @@ def parse_arguments():
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     args = parse_arguments()
-    upload(args.fname, args.lifetime)
-
+    file_url_dict = upload(args.fname, args.lifetime,
+            webdav_file_pattern = FILENAME_PATTERN, file_url_pattern=FILE_URL_PATTERN)
+    print_notification_message(notification_message=MESSAGE, file_url_dict=file_url_dict)
