@@ -5,7 +5,6 @@ from glib import set_application_name
 from urlparse import urlparse
 from collections import namedtuple
 
-
 APPLICATION_NAME = 'davify'
 set_application_name(APPLICATION_NAME)
 
@@ -35,11 +34,13 @@ def get_passwords(application_name):
     '''
     retrieves the stored login data from the keyring
     '''
+    gk.unlock_sync(application_name, application_name)
     results = []
     for item_no in gk.list_item_ids_sync(application_name):
         item_info = gk.item_get_info_sync(application_name, item_no)
         results.append(_parse_item_info(item_info))
 
+    gk.lock_sync(application_name)
     return results
 
 def _parse_item_info(item_info):
