@@ -17,6 +17,7 @@ import easywebdav
 from davify import keyring
 from davify.transform import int_to_letters, letters_to_int, INT_TO_CHR
 from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, MESSAGE
+from davify.clean_directory import clean_directory
 
 APPLICATION_NAME = 'davify'
 get_version_suffix = lambda: strftime("-%d%b-%I%M%p").lower()
