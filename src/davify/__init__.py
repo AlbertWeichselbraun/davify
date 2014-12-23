@@ -9,6 +9,7 @@ davify - uploads files to a webdav server for retrieval via https
 from argparse import ArgumentParser
 from time import strftime
 from os.path import splitext, basename, join as os_join
+from urllib import quote
 from random import choice
 import gtk
 
@@ -48,6 +49,7 @@ def get_file_name_dict(fname, suggested_lifetime, version_suffix=''):
     return {'random_prefix' : random_prefix,
             'lifetime_str'  : lifetime_str,
             'fname'         : fname,
+            'fname_quoted'  : quote(fname),
             'version_suffix': version_suffix,
             'ext'           : ext}
 
@@ -74,7 +76,7 @@ def upload(local_fname, lifetime, webdav_file_pattern, file_url_pattern):
     file_url_dict['url'] = file_url_pattern.format(**file_url_dict)
 
     remote_fname = os_join(file_storage.path,
-                           webdav_file_pattern.format(**file_url_dict))
+                           quote(webdav_file_pattern.format(**file_url_dict)))
     webdav.upload(local_fname, remote_fname)
     return file_url_dict
 
@@ -93,11 +95,12 @@ def print_notification_message(notification_message, file_url_dict):
 
 def parse_arguments():
     parser = ArgumentParser()
-    parser.add_argument("fname", help="File to davify.", default=None)
+    parser.add_argument("fname", help="File to davify or directory to clean.", default=None)
     parser.add_argument("--lifetime", help="Suggested file lifetime in hours (default: 1 week).", default=168)
     parser.add_argument("--retrieval-url-pattern", help="Pattern to use for the retrieval URL.")
     parser.add_argument("--webdav-file-pattern", help="Pattern used to create the webdav file.", default=FILENAME_PATTERN)
     parser.add_argument("--file-url-pattern", help="Patterns used to retrieve the created file", default=FILE_URL_PATTERN)
+    parser.add_argument("--clean-directory", help="Remove outdated files from the given directory.", action='store_true')
     return parser.parse_args()
 
 
@@ -107,6 +110,10 @@ def parse_arguments():
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     args = parse_arguments()
-    file_url_dict = upload(args.fname, args.lifetime,
-            webdav_file_pattern = FILENAME_PATTERN, file_url_pattern=FILE_URL_PATTERN)
-    print_notification_message(notification_message=MESSAGE, file_url_dict=file_url_dict)
+
+    if not args.clean_directory:
+        file_url_dict = upload(args.fname, args.lifetime,
+                webdav_file_pattern = FILENAME_PATTERN, file_url_pattern=FILE_URL_PATTERN)
+        print_notification_message(notification_message=MESSAGE, file_url_dict=file_url_dict)
+    else:
+        clean_directory(args.fname)
