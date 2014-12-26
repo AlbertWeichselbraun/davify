@@ -20,7 +20,7 @@ def clean_directory(location):
         location to clean
     '''
     for fname in glob("{0}/*".format(location)):
-        file_age_in_hours = time() - getmtime(fname) / 3600
+        file_age_in_hours = (time() - getmtime(fname)) / 3600
         file_max_age = get_max_file_age(fname)
 
         if file_max_age and file_age_in_hours > file_max_age:
