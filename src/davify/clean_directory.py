@@ -23,6 +23,8 @@ def clean_directory(location):
         file_age_in_hours = (time() - getmtime(fname)) / 3600
         file_max_age = get_max_file_age(fname)
 
+        # only remove the file, if file_max_age > file_age and
+        # file_max_age != 0 or None
         if file_max_age and file_age_in_hours > file_max_age:
             remove(fname)
 
