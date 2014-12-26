@@ -11,10 +11,8 @@ from time import strftime
 from os.path import splitext, basename, join as os_join
 from urllib import quote
 from random import choice
-import gtk
 
 import easywebdav
-from davify import keyring
 from davify.transform import int_to_letters, letters_to_int, INT_TO_CHR
 from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, MESSAGE
 from davify.clean_directory import clean_directory
@@ -64,6 +62,7 @@ def upload(local_fname, lifetime, webdav_file_pattern, file_url_pattern):
     ::param lifetime:
         suggested lifetime of the uploaded file
     '''
+    from davify import keyring
     file_storage = keyring.get_passwords(APPLICATION_NAME)[0]
     webdav = easywebdav.connect(file_storage.server,
                                 username=file_storage.username,
@@ -89,7 +88,8 @@ def print_notification_message(notification_message, file_url_dict):
     print(msg)
 
     # and send it to the clipboard :)
-    clipboard = gtk.clipboard_get()
+    from gtk import clipboard_get
+    clipboard = clipboard_get()
     clipboard.set_text(msg)
     clipboard.store()
 
@@ -97,7 +97,7 @@ def print_notification_message(notification_message, file_url_dict):
 def parse_arguments():
     parser = ArgumentParser()
     parser.add_argument("fname", help="File to davify or directory to clean.", default=None)
-    parser.add_argument("--lifetime", help="Suggested file lifetime in hours (default: 1 week).", default=168)
+    parser.add_argument("--lifetime", help="Suggested file lifetime in hours (default: 1 week). Zero suggests that the file is never deleted.", type=int, default=168)
     parser.add_argument("--retrieval-url-pattern", help="Pattern to use for the retrieval URL.")
     parser.add_argument("--webdav-file-pattern", help="Pattern used to create the webdav file.", default=FILENAME_PATTERN)
     parser.add_argument("--file-url-pattern", help="Patterns used to retrieve the created file", default=FILE_URL_PATTERN)
