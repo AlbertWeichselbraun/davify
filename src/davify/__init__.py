@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 '''
 davify - uploads files to a webdav server for retrieval via https
@@ -9,7 +9,10 @@ davify - uploads files to a webdav server for retrieval via https
 from argparse import ArgumentParser
 from time import strftime
 from os.path import splitext, basename, join as os_join
-from urllib import quote
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
 from random import choice
 
 import easywebdav
@@ -41,7 +44,7 @@ def get_file_name_dict(fname, suggested_lifetime, version_suffix=''):
     '''
     assert suggested_lifetime < 4096
 
-    random_prefix = "".join((choice(INT_TO_CHR) for _ in xrange(4)))
+    random_prefix = "".join((choice(INT_TO_CHR) for _ in range(4)))
     lifetime_str  = int_to_letters(suggested_lifetime)
     fname, ext    = splitext(basename(fname))
 
