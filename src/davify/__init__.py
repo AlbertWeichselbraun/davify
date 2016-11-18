@@ -57,8 +57,8 @@ def get_file_name_dict(fname, suggested_lifetime, version_suffix=''):
 
 
 def upload(local_fname, lifetime, webdav_file_pattern, file_url_pattern):
-    ''' uploads the given file to the webdav server :) 
-    
+    ''' uploads the given file to the webdav server :)
+
     ::param local_fname:
         file name of the local file
 
@@ -66,7 +66,7 @@ def upload(local_fname, lifetime, webdav_file_pattern, file_url_pattern):
         suggested lifetime of the uploaded file
     '''
     from davify import keyring
-    file_storage = keyring.get_passwords(APPLICATION_NAME)[0]
+    file_storage = keyring.get_passwords()[0]
     webdav = easywebdav.connect(file_storage.server,
                                 username=file_storage.username,
                                 password=file_storage.password,

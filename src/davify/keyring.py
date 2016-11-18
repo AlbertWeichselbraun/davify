@@ -1,58 +1,50 @@
 #!/usr/bin/env python
 
-import gnomekeyring as gk
-from glib import set_application_name
-from urlparse import urlparse
+import secretstorage
 from collections import namedtuple
 
-APPLICATION_NAME = 'davify'
-set_application_name(APPLICATION_NAME)
-
+APPLICATION_NAME = "davify"
 FileStorage = namedtuple('FileStorage', 'username password protocol server port path')
 
+def get_secret_storage():
+    bus = secretstorage.dbus_init()
+    return secretstorage.get_default_collection(bus)
 
-def store_password(username, pwd, protocol, server, service, port, path, application_name):
+def store_password(username, pwd, protocol, server, service, port, path):
     '''
     stores the given password in the gnome keyring
     '''
-    if application_name not in gk.list_keyring_names_sync():
-        gk.create_sync(application_name, application_name)
+    secret_storage = get_secret_storage()
+    attrs = {'application': APPLICATION_NAME,
+             'username': username,
+             'server': server,
+             'protocol': protocol,
+             'service': service,
+             'port': str(port),
+             'path': path,
+            }
+    description = 'davify WebDAV password for <%(protocol)s://%(username)s@%(server)s:%(port)s/%(path)s>' % (attrs)
+    secret_storage.create_item(description, attrs, pwd.encode('utf-8'))
 
-    atts = {'application': application_name,
-            'username': username,
-            'server': server,
-            'protocol': protocol,
-            'service': service,
-            'port': str(port),
-            'path': path,
-           }
-    description = '%(protocol)s://%(username)s@%(server)s:%(port)s/%(path)s' % (atts)
-    gk.item_create_sync(application_name, gk.ITEM_GENERIC_SECRET,
-            description, atts, pwd, True)
-
-def get_passwords(application_name):
+def get_passwords():
     '''
     retrieves the stored login data from the keyring
     '''
-    gk.unlock_sync(application_name, application_name)
-    results = []
-    for item_no in gk.list_item_ids_sync(application_name):
-        item_info = gk.item_get_info_sync(application_name, item_no)
-        results.append(_parse_item_info(item_info))
+    secret_storage = get_secret_storage()
+    if secret_storage.is_locked():
+        secret_storage.unlock()
 
-    gk.lock_sync(application_name)
-    return results
+    items = [_parse_item(item) for item in secret_storage.search_items({'application': APPLICATION_NAME})]
 
-def _parse_item_info(item_info):
-    url_info = urlparse(item_info.get_display_name())
-    user, server = url_info.netloc.split('@')
-    server, port = server.split(':')
-    return FileStorage(username=user, password=item_info.get_secret(), 
-        protocol=url_info.scheme, server=server, port=port, path=url_info.path)
+    return items
 
+def _parse_item(item):
+    item_attr = item.get_attributes()
+    return FileStorage(username=item_attr['username'], password=item.get_secret().decode('utf-8'),
+                protocol=item_attr['protocol'], server=item_attr['server'], port=item_attr['port'], path=item_attr['path'])
 
 
 if __name__ == '__main__':
     #store_password('albert-davify', 'test', 'https', 'cloud.weichselbraun.net',
-    #               'webdav', '443', 'dav/davify', APPLICATION_NAME)
-    print(get_passwords(APPLICATION_NAME))
+    #               'webdav', '443')
+    print(get_passwords())
