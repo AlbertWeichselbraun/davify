@@ -3,40 +3,39 @@
 '''
 davify - uploads files to a webdav server for retrieval via https
 
-'''
+   .. moduleauthor:: Albert Weichselbraun albert.weichselbraun@htwchur.ch
 
+'''
 
 from argparse import ArgumentParser
 from time import strftime
-from os.path import splitext, basename, join as os_join
+from os.path import splitext, basename, join as os_join, isdir
 from os import getenv
-try:
-    from urllib.parse import quote
-except ImportError:
-    from urllib import quote
+from tempfile import TemporaryDirectory
+from glob import glob
+from urllib.parse import quote
 from random import choice
 
 import sys
+import tarfile
 import easywebdav
-from davify import keyring, store_password
+from davify import keyring
 from davify.transform import int_to_letters, letters_to_int, INT_TO_CHR
 from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, MESSAGE
 from davify.clean_directory import clean_directory
 
 APPLICATION_NAME = 'davify'
+TAR_FILE_MODE = 'w:xz'
+TAR_FILE_EXT = ".txz"
 get_version_suffix = lambda: strftime("-%d%b-%I%M%p").lower()
 
 def get_file_name_dict(fname, suggested_lifetime, version_suffix=''):
     '''
-    ::param fname:
-        name of the file to davify
-    ::param suggested_lifetime:
-        suggested file lifetime in hours
-    ::param fname_suffix:
-        optional version_suffix
+    :param fname: name of the file to davify
+    :param suggested_lifetime: suggested file lifetime in hours
+    :param fname_suffix: optional version_suffix
 
-    ::returns:
-        a filename which follows the following pattern
+    :returns: a filename which follows the following pattern \
           rrrrtt-fname-suffix.ext
 
         rrrr   ... random prefix
@@ -60,13 +59,10 @@ def get_file_name_dict(fname, suggested_lifetime, version_suffix=''):
 
 
 def upload(local_fname, lifetime, webdav_file_pattern, file_url_pattern):
-    ''' uploads the given file to the webdav server :)
+    ''' Uploads the given file to the webdav server :)
 
-    ::param local_fname:
-        file name of the local file
-
-    ::param lifetime:
-        suggested lifetime of the uploaded file
+    :param local_fname: file name of the local file
+    :param lifetime: suggested lifetime of the uploaded file
     '''
     file_storage = keyring.get_passwords()[0]
     webdav = easywebdav.connect(file_storage.server,
@@ -87,7 +83,11 @@ def upload(local_fname, lifetime, webdav_file_pattern, file_url_pattern):
 
 def print_notification_message(notification_message, file_url_dict):
     '''
-    prints the notification message based on the file_url_dict
+    Prints the notification message based on the file_url_dict and
+    copies the url to the clipboard.
+
+    :param notification_message: the notification message template string
+    :param file_url_dict: a dictionary with the filename and url.
     '''
     msg = notification_message.format(**file_url_dict).replace("\\n", "\n")
     print(msg)
@@ -100,7 +100,7 @@ def setup_webdav_server(default_protocol='https', default_server='localhost',
                         default_port=443, default_path='/',
                         default_username=getenv('USER')):
     '''
-    Setup the webdav server
+    Setup the webdav server authentification data.
     '''
     from getpass import getpass
 
@@ -112,16 +112,46 @@ def setup_webdav_server(default_protocol='https', default_server='localhost',
     path = input("WebDAV server path ({}): ".format(default_path)) or default_path
     username = input("WebDAV server username ({}): ".format(default_username)) or default_username
     password = getpass("WebDAV server password: ")
-    store_password(username, password, protocol, server, port, path)
+    keyring.store_password(username, password, protocol, server, port, path)
+
+def archive_files(archive_name, file_pattern_list):
+    '''
+    Stores all files listed in file_pattern_list in the archive with
+    name archive_name.
+
+    :param archive_name: the name of the archive to create
+    :param file_pattern_list: a list of file pattern to archive
+    '''
+    with tarfile.open(archive_name, mode=TAR_FILE_MODE) as tar:
+        for pattern in file_pattern_list:
+            for fname in glob(pattern):
+                print("  Adding {} ...".format(fname))
+                tar.add(fname, recursive=True)
+
+def get_archive_name(filename):
+    '''
+    Computes the archive name based on the given filename.
+
+    :param directory: directory of the archive file
+    :param filename: filename of the input file used to compute \
+        the archive name
+    '''
+    filename = filename[:-1] if filename.endswith('/') else filename
+    # base result on the first filename matching pattern; this also prevents
+    # wildcards in filenames :)
+    archive_name = basename(glob(filename)[0])
+    return archive_name
 
 def parse_arguments():
+    ''' prepares the argument parser '''
     parser = ArgumentParser()
-    parser.add_argument("fname", help="File to davify or directory to clean.", nargs="*", default=None)
+    parser.add_argument("fname", help="File(s) to davify or directory to clean.", nargs="*", default=None)
     parser.add_argument("--lifetime", help="Suggested file lifetime in hours (default: 1 week). Zero suggests that the file is never deleted.", type=int, default=168)
     parser.add_argument("--retrieval-url-pattern", help="Pattern to use for the retrieval URL.")
     parser.add_argument("--webdav-file-pattern", help="Pattern used to create the webdav file.", default=FILENAME_PATTERN)
     parser.add_argument("--file-url-pattern", help="Patterns used to retrieve the created file", default=FILE_URL_PATTERN)
     parser.add_argument("--clean-directory", help="Remove outdated files from the given directory.", action='store_true')
+    parser.add_argument("--archive-name", "-n", help="An optional file name for the created archive.")
     parser.add_argument("--setup", help="Setup WebDAV connection.", action="store_true")
     return parser.parse_args()
 
@@ -139,13 +169,16 @@ if __name__ == '__main__':
         if not args.fname:
             print("No filename provided.")
             sys.exit(-1)
-        elif len(args.fname) == 1:
-            filename = args.fname[0]
+        elif len(args.fname) == 1 and not isdir(args.fname[0]):
+            file_url_dict = upload(args.fname[0], args.lifetime,
+                                   webdav_file_pattern=FILENAME_PATTERN,
+                                   file_url_pattern=FILE_URL_PATTERN)
         else:
-            # multi file support
-            pass
-        file_url_dict = upload(filename, args.lifetime,
-                               webdav_file_pattern=FILENAME_PATTERN,
-                               file_url_pattern=FILE_URL_PATTERN)
-        print_notification_message(notification_message=MESSAGE, file_url_dict=file_url_dict)
+            with TemporaryDirectory() as tempdirname:
+                filename = os_join(tempdirname, args.archive_name if args.archive_name else get_archive_name(args.fname[0])+TAR_FILE_EXT)
+                archive_files(filename, args.fname)
+                file_url_dict = upload(filename, args.lifetime,
+                                       webdav_file_pattern=FILENAME_PATTERN,
+                                       file_url_pattern=FILE_URL_PATTERN)
 
+        print_notification_message(notification_message=MESSAGE, file_url_dict=file_url_dict)

@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
-import secretstorage
+'''
+Handles access to the WebDAV's server creditentials.
+'''
+
 from collections import namedtuple
+
+import secretstorage
 
 APPLICATION_NAME = "davify"
 FileStorage = namedtuple('FileStorage', 'username password protocol server port path')
@@ -40,7 +45,7 @@ def get_passwords():
 def _parse_item(item):
     item_attr = item.get_attributes()
     return FileStorage(username=item_attr['username'], password=item.get_secret().decode('utf-8'),
-                protocol=item_attr['protocol'], server=item_attr['server'], port=item_attr['port'], path=item_attr['path'])
+                       protocol=item_attr['protocol'], server=item_attr['server'], port=item_attr['port'], path=item_attr['path'])
 
 
 if __name__ == '__main__':
