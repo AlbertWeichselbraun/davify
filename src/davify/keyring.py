@@ -10,7 +10,7 @@ def get_secret_storage():
     bus = secretstorage.dbus_init()
     return secretstorage.get_default_collection(bus)
 
-def store_password(username, pwd, protocol, server, service, port, path):
+def store_password(username, pwd, protocol, server, port, path):
     '''
     stores the given password in the gnome keyring
     '''
@@ -19,7 +19,6 @@ def store_password(username, pwd, protocol, server, service, port, path):
              'username': username,
              'server': server,
              'protocol': protocol,
-             'service': service,
              'port': str(port),
              'path': path,
             }
