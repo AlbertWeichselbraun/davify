@@ -6,10 +6,29 @@ standard file name and data type transformations
 
 from os.path import dirname, basename, join as os_join
 from string import ascii_lowercase, ascii_uppercase, digits
+from datetime import timedelta
 
-INT_TO_CHR = ascii_lowercase + ascii_uppercase + digits + "_-"
-
-
+TIME_TO_CHR = {timedelta(minutes=5), 'a',
+               timedelta(minutes=10), 'b',
+               timedelta(minutes=20), 'c',
+               timedelta(minutes=40), 'd',
+               timedelta(hours=1), 'e',
+               timedelta(hours=2), 'f',
+               timedelta(hours=4), 'g',
+               timedelta(hours=8), 'h',
+               timedelta(hours=16), 'i',
+               timedelta(days=1), 'j',
+               timedelta(days=2), 'k',
+               timedelta(days=4), 'l',
+               timedelta(weeks=1), 'm',
+               timedelta(weeks=2), 'n',
+               timedelta(weeks=4), 'o',
+               timedelta(weeks=8), 'p',
+               timedelta(weeks=16), 'q',
+               timedelta(weeks=32), 'r',
+               timedelta(weeks=64), 's',
+               timedelta(weeks=128), 't'
+              }
 
 
 # changes filename prefix to a subdir
