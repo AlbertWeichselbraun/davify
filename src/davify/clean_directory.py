@@ -11,7 +11,7 @@ from time import time
 from glob import glob
 from re import compile
 
-from davify.transform import letters_to_int
+from davify.transform import CHR_TO_TIME
 from davify.config import EXTRACT_LIFETIME_STR
 
 def clean_directory(location):
@@ -37,16 +37,18 @@ def get_max_file_age(fname):
     m = compile(EXTRACT_LIFETIME_STR).search(fname)
     if m:
         lifetime_str = m.group(1)
-        assert len(lifetime_str) == 2
-        return letters_to_int(lifetime_str)
+        assert len(lifetime_str) == 1
+        return CHR_TO_TIME[lifetime_str]
 
     return None
-    
+
 
 # -----------------------------------------------------------
 # - Unit tests
 # -----------------------------------------------------------
 
 def test_max_file_age():
-    fname = "EIcLcO-buchungen-fernw%C3%A4rme-23dez-0657.pdf"
-    assert get_max_file_age(fname) == 168
+    from datetime import timedelta
+
+    fname = "EIcLm-buchungen-fernw%C3%A4rme-23dez-0657.pdf"
+    assert get_max_file_age(fname) == timedelta(weeks=1)
