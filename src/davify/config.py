@@ -11,4 +11,4 @@ _g = lambda option, default: CONFIG.get(section='default', option=option) \
 FILENAME_PATTERN = _g('filename_pattern', '{random_prefix}{lifetime_str}-{fname}{version_suffix}{ext}')
 FILE_URL_PATTERN = _g('file_url_pattern', '{protocol}://{file_server}{file_path}{random_prefix}{lifetime_str}-{fname}{version_suffix}{ext}')
 MESSAGE = _g('notification_message', '{url}\n(Note: The file will be availalbe for {lifetime}.)')
-EXTRACT_LIFETIME_STR = _g('extract_lifetime_str', r'\w{4}(\w{1})-.*')
+EXTRACT_LIFETIME_STR = _g('extract_lifetime_str', r'[a-zA-Z0-9_-]{4}([a-zA-Z0-9_-])-.*')
