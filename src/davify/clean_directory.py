@@ -10,6 +10,7 @@ from os.path import getmtime, basename
 from time import time
 from glob import glob
 from re import compile
+from datetime import timedelta
 
 from davify.transform import CHR_TO_TIME
 from davify.config import EXTRACT_LIFETIME_STR
@@ -20,7 +21,7 @@ def clean_directory(location):
         location to clean
     '''
     for fname in glob("{0}/*".format(location)):
-        file_age_in_hours = (time() - getmtime(fname)) / 3600
+        file_age_in_hours = timedelta(seconds=time() - getmtime(fname))
         file_max_age = get_max_file_age(fname)
 
         # only remove the file, if file_max_age > file_age and
