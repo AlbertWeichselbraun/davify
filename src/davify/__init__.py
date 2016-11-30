@@ -147,12 +147,11 @@ def get_archive_name(filename):
 def parse_arguments():
     ''' prepares the argument parser '''
     parser = ArgumentParser()
-    parser.add_argument("fname", help="File(s) to davify or directory to clean.", nargs="*", default=None)
+    parser.add_argument("fname", help="File(s) to davify.", nargs="*", default=None)
     parser.add_argument("--lifetime", help="Suggested file lifetime (default: '1 week'). 'forever' suggests that the file is never deleted.", default="1 week")
     parser.add_argument("--retrieval-url-pattern", help="Pattern to use for the retrieval URL.")
     parser.add_argument("--webdav-file-pattern", help="Pattern used to create the webdav file.", default=FILENAME_PATTERN)
     parser.add_argument("--file-url-pattern", help="Patterns used to retrieve the created file", default=FILE_URL_PATTERN)
-    parser.add_argument("--clean-directory", help="Remove outdated files from the given directory.", action='store_true')
     parser.add_argument("--archive-name", "-n", help="An optional file name for the created archive.")
     parser.add_argument("--setup", help="Setup WebDAV connection.", action="store_true")
     return parser.parse_args()
@@ -165,8 +164,6 @@ if __name__ == '__main__':
 
     if args.setup:
         setup_webdav_server()
-    elif args.clean_directory:
-        clean_directory(args.fname)
     else:
         if args.lifetime not in VALID_LIFE_TIMES:
             print("Invalid lifetime - please refer to the list below for valid choices")

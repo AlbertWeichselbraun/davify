@@ -30,7 +30,6 @@ optional arguments:
                         Pattern used to create the webdav file.
   --file-url-pattern FILE_URL_PATTERN
                         Patterns used to retrieve the created file
-  --clean-directory     Remove outdated files from the given directory.
   --archive-name ARCHIVE_NAME, -n ARCHIVE_NAME
                         An optional file name for the created archive.
   --setup               Setup WebDAV connection.
@@ -54,7 +53,15 @@ Davify's configuration resides in `~/.davify`. Please find below an example conf
 ```
 [default]
 filename_pattern = {random_prefix}{lifetime_str}-{fname}{version_suffix}{ext}
-extract_lifetime_str = \w{4}(\w{2})-.*
 file_url_pattern = {protocol}://example.net/{random_prefix}{lifetime_str}-{fname_quoted}{version_suffix}{ext}
 notification_message = {url}\n(Note the file will be available for {hours} hours.)`
+```
+
+## Server configuration
+Calling `clean_directory.py` on the server removes expired files.
+
+Example crontab entry:
+```crontab
+# clean davify directory
+15 00   * * *   www-data  python3 /usr/local/src/git/davify/src/davify/clean_directory.py /var/www/davify
 ```

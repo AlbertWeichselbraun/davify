@@ -5,6 +5,7 @@ removes outdated files from the given directory
 
 '''
 
+from argparse import ArgumentParser
 from os import remove
 from os.path import getmtime, basename
 from time import time
@@ -14,6 +15,8 @@ from datetime import timedelta
 
 from davify.transform import CHR_TO_TIME
 from davify.config import EXTRACT_LIFETIME_STR
+
+
 
 def clean_directory(location):
     '''
@@ -53,3 +56,18 @@ def test_max_file_age():
 
     fname = "EIcLm-buchungen-fernw%C3%A4rme-23dez-0657.pdf"
     assert get_max_file_age(fname) == timedelta(weeks=1)
+
+
+def parse_arguments():
+    ''' prepares the argument parser '''
+    parser = ArgumentParser()
+    parser.add_argument("fname", help="The directory to clean.")
+    return parser.parse_args()
+
+# -----------------------------------------------------------------------------
+# The main program
+# -----------------------------------------------------------------------------
+if __name__ == '__main__':
+    args = parse_arguments()
+    clean_directory(args.fname)
+
