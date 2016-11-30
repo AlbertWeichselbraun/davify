@@ -13,7 +13,7 @@ In addition it keeps track of a file's lifetime and provides scripts for automat
 usage: dav.py [-h] [--lifetime LIFETIME]
                    [--retrieval-url-pattern RETRIEVAL_URL_PATTERN]
                    [--webdav-file-pattern WEBDAV_FILE_PATTERN]
-                   [--file-url-pattern FILE_URL_PATTERN] [--clean-directory]
+                   [--file-url-pattern FILE_URL_PATTERN] 
                    [--archive-name ARCHIVE_NAME] [--setup]
                    [fname [fname ...]]
 
@@ -40,7 +40,7 @@ optional arguments:
 ```
 albert@myhost:~$ python3 dav.py transform.py
 https://example.net/qOMvcO/transform-15dez-0201.py
-(Note the file will be available for 168 hours.)
+(Note the file will be available for 1 week.)
 ```
 
 ## Setup and configuration files:
@@ -54,7 +54,7 @@ Davify's configuration resides in `~/.davify` and the WebDAV server credentials 
 [default]
 filename_pattern = {random_prefix}{lifetime_str}-{fname}{version_suffix}{ext}
 file_url_pattern = {protocol}://example.net/{random_prefix}{lifetime_str}-{fname_quoted}{version_suffix}{ext}
-notification_message = {url}\n(Note the file will be available for {hours} hours.)`
+notification_message = {url}\n(Note the file will be available for {lifetime}.)`
 ```
 
 ## Server configuration
@@ -63,5 +63,5 @@ Calling `clean_directory.py` on the server removes expired files.
 Example crontab entry:
 ```crontab
 # clean davify directory
-15 00   * * *   www-data  python3 /usr/local/src/git/davify/src/davify/clean_directory.py /var/www/davify
+15 00   * * *   www-data  python3 /usr/local/davify/clean_directory.py /var/www/davify
 ```
