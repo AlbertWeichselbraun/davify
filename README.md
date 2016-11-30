@@ -10,7 +10,7 @@ In addition it keeps track of a file's lifetime and provides scripts for automat
 
 ## Command line parameters
 ```bash
-usage: __init__.py [-h] [--lifetime LIFETIME]
+usage: dav.py [-h] [--lifetime LIFETIME]
                    [--retrieval-url-pattern RETRIEVAL_URL_PATTERN]
                    [--webdav-file-pattern WEBDAV_FILE_PATTERN]
                    [--file-url-pattern FILE_URL_PATTERN] [--clean-directory]
@@ -38,7 +38,7 @@ optional arguments:
 ## Example call: 
 
 ```
-albert@myhost:~$ python __init__.py transform.py
+albert@myhost:~$ python3 dav.py transform.py
 https://example.net/qOMvcO/transform-15dez-0201.py
 (Note the file will be available for 168 hours.)
 ```
@@ -46,9 +46,9 @@ https://example.net/qOMvcO/transform-15dez-0201.py
 ## Setup and configuration files:
 Setup the WebDAV server with
 ```bash
-python3 __init__.py --setup
+python3 dav.py --setup
 ```
-Davify's configuration resides in `~/.davify`. Please find below an example configuration file.
+Davify's configuration resides in `~/.davify` and the WebDAV server credentials are stored in your system's keystore. Please find below an example configuration file.
 
 ```
 [default]
