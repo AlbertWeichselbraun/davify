@@ -114,7 +114,7 @@ def setup_webdav_server(default_protocol='https', default_server='localhost',
     path = input("WebDAV server path ({}): ".format(default_path)) or default_path
     username = input("WebDAV server username ({}): ".format(default_username)) or default_username
     password = getpass("WebDAV server password: ")
-    keyring.store_password(username, password, protocol, server, port, path)
+    store_password(username, password, protocol, server, port, path)
 
 def archive_files(archive_name, file_pattern_list):
     '''

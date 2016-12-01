@@ -8,6 +8,45 @@ into the clipboard.
 
 In addition it keeps track of a file's lifetime and provides scripts for automatically removing files once their lifetime has expired.
 
+## Setup and configuration files:
+
+### Required libraries
+
+* easywebdav
+* pyperclip
+* secretstorage
+
+```bash
+apt-get install python3-pyperclip python3-secretstorage python3-easywebdav
+
+# python3-easywebdev is broken in ubuntu 16.04 
+# -> you need to download and install the latest version from the debian repositories
+wget http://ftp.at.debian.org/debian/pool/main/p/python-easywebdav/python3-easywebdav_1.2.0-3_all.deb
+dpkg -i python3-easywebdav_1.2.0-3_all.deb
+```
+
+### Client configuration:
+Setup the WebDAV client with
+```bash
+python3 dav.py --setup
+```
+Davify's configuration resides in `~/.davify` and the WebDAV server credentials are stored in your system's keystore. Please find below an example configuration file.
+
+```
+[default]
+filename_pattern = {random_prefix}{lifetime_str}-{fname}{version_suffix}{ext}
+file_url_pattern = {protocol}://example.net/{random_prefix}{lifetime_str}-{fname_quoted}{version_suffix}{ext}
+notification_message = {url}\n(Note the file will be available for {lifetime}.)`
+```
+
+### Server configuration
+Calling `clean_directory.py` on the server removes expired files.
+
+Example crontab entry:
+```cron
+# clean davify directory
+15 00   * * *   www-data  python3 /usr/local/davify/clean_directory.py /var/www/davify
+```
 ## Command line parameters
 ```bash
 usage: dav.py [-h] [--lifetime LIFETIME]
@@ -43,25 +82,4 @@ https://example.net/qOMvcO/transform-15dez-0201.py
 (Note the file will be available for 1 week.)
 ```
 
-## Setup and configuration files:
-Setup the WebDAV server with
-```bash
-python3 dav.py --setup
-```
-Davify's configuration resides in `~/.davify` and the WebDAV server credentials are stored in your system's keystore. Please find below an example configuration file.
 
-```
-[default]
-filename_pattern = {random_prefix}{lifetime_str}-{fname}{version_suffix}{ext}
-file_url_pattern = {protocol}://example.net/{random_prefix}{lifetime_str}-{fname_quoted}{version_suffix}{ext}
-notification_message = {url}\n(Note the file will be available for {lifetime}.)`
-```
-
-## Server configuration
-Calling `clean_directory.py` on the server removes expired files.
-
-Example crontab entry:
-```crontab
-# clean davify directory
-15 00   * * *   www-data  python3 /usr/local/davify/clean_directory.py /var/www/davify
-```
