@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-
 '''
 removes outdated files from the given directory
-
 '''
 
 from argparse import ArgumentParser
@@ -15,7 +13,6 @@ from datetime import timedelta
 
 from davify.transform import CHR_TO_TIME
 from davify.config import EXTRACT_LIFETIME_STR
-
 
 
 def clean_directory(location):
@@ -64,10 +61,10 @@ def parse_arguments():
     parser.add_argument("fname", help="The directory to clean.")
     return parser.parse_args()
 
+
 # -----------------------------------------------------------------------------
 # The main program
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     args = parse_arguments()
     clean_directory(args.fname)
-

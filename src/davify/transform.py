@@ -8,6 +8,7 @@ from os.path import dirname, basename, join as os_join
 from datetime import timedelta
 from collections import OrderedDict
 
+
 #
 # static list of VALID_LIFE_TIMES and the corresponding
 # mapping to one letter codes
@@ -58,24 +59,33 @@ TIME_TO_CHR = {timedelta(): '0',
                timedelta(days=275): 's',
                timedelta(days=366): 't',
                timedelta(days=731): 'u',
-               timedelta(days=1461): 'v'
-              }
+               timedelta(days=1461): 'v'}
 
 CHR_TO_TIME = {ch: delta for delta, ch in TIME_TO_CHR.items()}
 
 
 # changes filename prefix to a subdir
 # 1H5Mc-keyring-12dec-1031pm.py > 1H5McO/keyring-12dec-1031pm.py
-subdir_prefix = lambda s: os_join(dirname(s), basename(s)[:5] + "/" + basename(s)[6:])
-new_base_url = lambda newbase, s: os_join(newbase, basename(s))
+def subdir_prefix(s):
+    return os_join(dirname(s), basename(s)[:5] + "/" + basename(s)[6:])
+
+
+def new_base_url(newbase, s):
+    return os_join(newbase, basename(s))
+
 
 # -----------------------------------------------------------
 # - Unit tests
 # -----------------------------------------------------------
-
 def test_subdir_prefix():
-    assert subdir_prefix('http://www.test.org/mydir/dav/1H5cO-keyring-12dec-1031pm.py') == 'http://www.test.org/mydir/dav/1H5cO/keyring-12dec-1031pm.py'
+    assert subdir_prefix('http://www.test.org/mydir/dav/1H5cO-keyring'
+                         '-12dec-1031pm.py') == 'http://www.test.org/mydir/' \
+                                                'dav/1H5cO/keyring-12dec-10' \
+                                                '31pm.py'
+
 
 def test_new_base_url():
-    assert new_base_url('http://dav.test.org', 'http://www.test.org/mydir/dav/15McO-keyring-12dec-1031pm.py') == 'http://dav.test.org/15McO-keyring-12dec-1031pm.py'
-
+    assert new_base_url('http://dav.test.org',
+                        'http://www.test.org/mydir/dav/15McO-keyring'
+                        '-12dec-1031pm.py') == 'http://dav.test.org/15McO-' \
+                                               'keyring-12dec-1031pm.py'
