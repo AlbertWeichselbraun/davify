@@ -18,6 +18,7 @@ from random import choice
 from string import ascii_lowercase, ascii_uppercase, digits
 from shutil import which
 from warnings import warn
+from hashlib import sha3_224, sha1
 
 import sys
 import tarfile
@@ -26,7 +27,8 @@ import pyperclip
 
 from davify.keyring import get_passwords, store_password
 from davify.transform import TIME_TO_CHR, VALID_LIFE_TIMES
-from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, MESSAGE
+from davify.config import (FILENAME_PATTERN, FILE_URL_PATTERN, HASH_PATTERN,
+                           MESSAGE)
 
 APPLICATION_NAME = 'davify'
 TAR_FILE_MODE = 'w:xz'
@@ -175,6 +177,10 @@ def parse_arguments():
     parser.add_argument('--file-url-pattern',
                         help='Patterns used to retrieve the created file',
                         default=FILE_URL_PATTERN)
+    parser.add_argument('--hash',
+                        action='store_true',
+                        default=False,
+                        help='Add SHA1 and SHA3 checksums to the upload.')
     parser.add_argument('--archive-name', '-n',
                         help='An optional file name for the created archive.')
     parser.add_argument('--setup', help='Setup WebDAV connection.',
@@ -210,7 +216,8 @@ if __name__ == '__main__':
             print('No filename provided.')
             sys.exit(-1)
         elif len(args.fname) == 1 and not isdir(args.fname[0]):
-            file_url_dict = upload(args.fname[0], args.lifetime,
+            filename = args.fname[0]
+            file_url_dict = upload(filename, args.lifetime,
                                    webdav_file_pattern=FILENAME_PATTERN,
                                    file_url_pattern=FILE_URL_PATTERN)
         else:
@@ -223,6 +230,14 @@ if __name__ == '__main__':
                 file_url_dict = upload(filename, args.lifetime,
                                        webdav_file_pattern=FILENAME_PATTERN,
                                        file_url_pattern=FILE_URL_PATTERN)
+
+        if args.hash:
+            sha1 = sha1(open(filename, 'rb').read()).hexdigest()
+            sha3 = sha3_224(open(filename, 'rb').read()).hexdigest()
+            file_url_dict['hash'] = HASH_PATTERN.format(sha1=sha1, sha3=sha3)
+        else:
+            file_url_dict['hash'] = ''
+
 
         print_notification_message(notification_message=MESSAGE,
                                    file_url_dict=file_url_dict)
