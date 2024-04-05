@@ -28,7 +28,7 @@ dpkg -i python3-easywebdav_1.2.0-3_all.deb
 ### Client configuration:
 Setup the WebDAV client with
 ```bash
-python3 dav.py --setup
+python3 cli.py --setup
 ```
 Davify's configuration resides in `~/.davify` and the WebDAV server credentials are stored in your system's keystore. Please find below an example configuration file.
 
@@ -49,7 +49,7 @@ Example crontab entry:
 ```
 ## Command line parameters
 ```bash
-usage: dav.py [-h] [--lifetime LIFETIME]
+usage: cli.py [-h] [--lifetime LIFETIME]
                    [--retrieval-url-pattern RETRIEVAL_URL_PATTERN]
                    [--webdav-file-pattern WEBDAV_FILE_PATTERN]
                    [--file-url-pattern FILE_URL_PATTERN] 

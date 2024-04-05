@@ -1,0 +1,33 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "davify"
+version = "1.0.0"
+description = "Davify uploads files to webdav servers and provides a download link for accessing them."
+keywords = ["webdav"]
+authors = ["Albert Weichselbraun <albert@weichselbraun.net>"]
+license = "GPL3"
+homepage = "https://github.com/AlbertWeichselbraun/davify"
+
+[tool.poetry.dependencies]
+python = "^3.8 || ^3.9 || ^3.10 || ^3.11 || ^3.12"
+easywebdav = "^1.2.0"
+secretstorage = "^3.3.3"
+pyperclip = "^1.8.2"
+
+[tool.poetry.scripts]
+davify = "davify.cli.davify:cli"
+
+[tool.poetry.extras]
+# add extra dependencies here if needed
+# code formatting with black
+
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+extend-exclude = '\.html$|\.txt$'
+include = '''
+  ^/src/|^/tests/
+'''
