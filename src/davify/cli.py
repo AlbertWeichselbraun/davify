@@ -13,6 +13,7 @@ from os.path import splitext, basename, join as os_join, isdir
 from os import getenv
 from tempfile import TemporaryDirectory
 from glob import glob
+from typing import List
 from urllib.parse import quote
 from random import choice
 from string import ascii_lowercase, ascii_uppercase, digits
@@ -112,12 +113,12 @@ def print_notification_message(notification_message, file_url_dict):
 
 
 def setup_webdav_server(
-    default_protocol="https",
-    default_server="localhost",
-    default_port=443,
-    default_path="/",
-    default_username=getenv("USER"),
-):
+    default_protocol:str ="https",
+    default_server:str ="localhost",
+    default_port:int =443,
+    default_path: str="/",
+    default_username: str=getenv("USER"),
+) -> None:
     """
     Setup the webdav server authentification data.
     """
@@ -136,7 +137,7 @@ def setup_webdav_server(
     store_password(username, password, protocol, server, port, path)
 
 
-def archive_files(archive_name, file_pattern_list):
+def archive_files(archive_name:str , file_pattern_list: List[str]):
     """
     Stores all files listed in file_pattern_list in the archive with
     name archive_name.
@@ -151,7 +152,7 @@ def archive_files(archive_name, file_pattern_list):
                 tar.add(fname, recursive=True)
 
 
-def get_archive_name(filename):
+def get_archive_name(filename: str) -> str:
     """
     Computes the archive name based on the given filename.
 
@@ -166,7 +167,7 @@ def get_archive_name(filename):
     return archive_name
 
 
-def parse_arguments():
+def parse_arguments() -> None:
     """prepares the argument parser"""
     parser = ArgumentParser()
     parser.add_argument("fname", help="File(s) to davify.", nargs="*", default=None)
@@ -206,7 +207,7 @@ def parse_arguments():
 # -----------------------------------------------------------------------------
 # The main program
 # -----------------------------------------------------------------------------
-if __name__ == "__main__":
+def cli() -> None:
     args = parse_arguments()
 
     if not which("xclip"):
@@ -268,3 +269,6 @@ if __name__ == "__main__":
         print_notification_message(
             notification_message=MESSAGE, file_url_dict=file_url_dict
         )
+
+if __name__ == "__main__":
+    cli()

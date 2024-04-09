@@ -18,7 +18,7 @@ secretstorage = "^3.3.3"
 pyperclip = "^1.8.2"
 
 [tool.poetry.scripts]
-davify = "davify.cli.davify:cli"
+davify = "davify.cli:cli"
 
 [tool.poetry.extras]
 # add extra dependencies here if needed
