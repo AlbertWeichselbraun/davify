@@ -5,8 +5,8 @@ from os.path import expanduser
 CONFIG = ConfigParser()
 CONFIG.read(expanduser("~/.davify"))
 
-_g = (
-    lambda option, default: CONFIG.get(section="default", option=option)
+_g = lambda option, default: (
+    CONFIG.get(section="default", option=option)
     if CONFIG.has_option(section="default", option=option)
     else default
 )
