@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "davify"
-version = "1.1.1"
+version = "1.1.2"
 description = "Davify uploads files to webdav servers and provides a download link for accessing them."
 keywords = ["webdav"]
 authors = ["Albert Weichselbraun <albert@weichselbraun.net>"]
