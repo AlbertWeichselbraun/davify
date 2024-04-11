@@ -4,21 +4,20 @@ removes outdated files from the given directory
 """
 
 from argparse import ArgumentParser
+from datetime import timedelta
+from glob import glob
 from os import remove
 from os.path import getmtime, basename
-from time import time
-from glob import glob
 from re import compile
-from datetime import timedelta
+from time import time
 
-from davify.transform import CHR_TO_TIME
 from davify.config import EXTRACT_LIFETIME_STR
+from davify.transform import CHR_TO_TIME
 
 
 def clean_directory(location):
     """
-    ::param location:
-        location to clean
+    :param location: location to clean
     """
     for fname in glob("{0}/*".format(location)):
         file_age_in_hours = timedelta(seconds=time() - getmtime(fname))
@@ -44,6 +43,14 @@ def get_max_file_age(fname):
     return None
 
 
+def cli():
+    """Cleans the given directory."""
+    parser = ArgumentParser()
+    parser.add_argument("directory", help="The directory to clean.")
+    args = parser.parse_args()
+    clean_directory(args.directory)
+
+
 # -----------------------------------------------------------
 # - Unit tests
 # -----------------------------------------------------------
@@ -56,16 +63,8 @@ def test_max_file_age():
     assert get_max_file_age(fname) == timedelta(weeks=1)
 
 
-def parse_arguments():
-    """prepares the argument parser"""
-    parser = ArgumentParser()
-    parser.add_argument("fname", help="The directory to clean.")
-    return parser.parse_args()
-
-
 # -----------------------------------------------------------------------------
-# The main program
+# Main program
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    args = parse_arguments()
-    clean_directory(args.fname)
+    cli()

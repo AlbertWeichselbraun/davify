@@ -10,25 +10,16 @@ In addition it keeps track of a file's lifetime and provides scripts for automat
 
 ## Setup and configuration files:
 
-### Required libraries
-
-* easywebdav
-* pyperclip
-* secretstorage
+### Installation
 
 ```bash
-apt-get install python3-pyperclip python3-secretstorage python3-easywebdav
-
-# python3-easywebdev is broken in ubuntu 16.04 
-# -> you need to download and install the latest version from the debian repositories
-wget http://ftp.at.debian.org/debian/pool/main/p/python-easywebdav/python3-easywebdav_1.2.0-3_all.deb
-dpkg -i python3-easywebdav_1.2.0-3_all.deb
+pipx install davify
 ```
 
 ### Client configuration:
 Setup the WebDAV client with
 ```bash
-python3 cli.py --setup
+davify --setup
 ```
 Davify's configuration resides in `~/.davify` and the WebDAV server credentials are stored in your system's keystore. Please find below an example configuration file.
 
@@ -40,16 +31,16 @@ notification_message = {url}\n(Note the file will be available for {lifetime}.)`
 ```
 
 ### Server configuration
-Calling `clean_directory.py` on the server removes expired files.
+Calling `clean-davify-directory` on the server removes expired files. Note that you need to provide the full path to the `clean-davify-directory` binary (use `which clean-davify-directory` to obtain the path).
 
 Example crontab entry:
 ```cron
 # clean davify directory
-15 00   * * *   www-data  python3 /usr/local/davify/clean_directory.py /var/www/davify
+15 00   * * *   www-data  /root/.local/bin/clean-davify-directory /var/www/davify
 ```
 ## Command line parameters
 ```bash
-usage: cli.py [-h] [--lifetime LIFETIME]
+usage: davify [-h] [--lifetime LIFETIME]
                    [--retrieval-url-pattern RETRIEVAL_URL_PATTERN]
                    [--webdav-file-pattern WEBDAV_FILE_PATTERN]
                    [--file-url-pattern FILE_URL_PATTERN] 
@@ -57,7 +48,7 @@ usage: cli.py [-h] [--lifetime LIFETIME]
                    [fname [fname ...]]
 
 positional arguments:
-  fname                 File(s) to davify or directory to clean.
+  fname                 File(s) to davify or directory to upload.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -77,9 +68,8 @@ optional arguments:
 ## Example call: 
 
 ```
-albert@myhost:~$ python3 dav.py transform.py
+albert@myhost:~$ davify transform.py
 https://example.net/qOMvcO/transform-15dez-0201.py
 (Note the file will be available for 1 week.)
 ```
-
 

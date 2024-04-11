@@ -4,10 +4,9 @@
 standard file name and data type transformations
 """
 
-from os.path import dirname, basename, join as os_join
-from datetime import timedelta
 from collections import OrderedDict
-
+from datetime import timedelta
+from os.path import dirname, basename, join as os_join
 
 #
 # static list of VALID_LIFE_TIMES and the corresponding

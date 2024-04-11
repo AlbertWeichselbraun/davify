@@ -7,28 +7,28 @@ davify - uploads files to a webdav server for retrieval via https
 
 """
 
-from argparse import ArgumentParser
-from time import strftime
-from os.path import splitext, basename, join as os_join, isdir
-from os import getenv
-from tempfile import TemporaryDirectory
-from glob import glob
-from typing import List
-from urllib.parse import quote
-from random import choice
-from string import ascii_lowercase, ascii_uppercase, digits
-from shutil import which
-from warnings import warn
-from hashlib import sha3_224, sha1
-
 import sys
 import tarfile
-import easywebdav
+from argparse import ArgumentParser
+from glob import glob
+from hashlib import sha3_224, sha1
+from os import getenv
+from os.path import splitext, basename, join as os_join, isdir
+from random import choice
+from shutil import which
+from string import ascii_lowercase, ascii_uppercase, digits
+from tempfile import TemporaryDirectory
+from time import strftime
+from typing import List, Dict
+from urllib.parse import quote, urljoin
+from warnings import warn
+
 import pyperclip
 
+from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, HASH_PATTERN, MESSAGE
 from davify.keyring import get_passwords, store_password
 from davify.transform import TIME_TO_CHR, VALID_LIFE_TIMES
-from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, HASH_PATTERN, MESSAGE
+from davify.upload import upload_to_webdav
 
 APPLICATION_NAME = "davify"
 TAR_FILE_MODE = "w:xz"
@@ -36,17 +36,20 @@ TAR_FILE_EXT = ".txz"
 INT_TO_CHR = ascii_lowercase + ascii_uppercase + digits + "_-"
 
 
-def get_version_suffix():
-    """Returns a version suffix based on the current time and date."""
+def get_version_suffix() -> str:
+    """
+    :returns: A version suffix based on the current time and date."""
     return strftime("-%d%b-%I%M%p").lower()
 
 
-def get_file_name_dict(fname, file_lifetime, version_suffix=""):
+def get_file_name_dict(
+    fname: str, file_lifetime: str, version_suffix: str = ""
+) -> Dict:
     """
     :param fname: name of the file to davify
     :param file_lifetime: suggested file lifetime in accordance to \
                the available VALID_LIFE_TIMES.
-    :param fname_suffix: optional version_suffix
+    :param version_suffix: a suffix that indicates the file version.
 
     :returns: a filename which follows the following pattern \
           rrrrt-fname-suffix.ext
@@ -70,30 +73,32 @@ def get_file_name_dict(fname, file_lifetime, version_suffix=""):
     }
 
 
-def upload(local_fname, lifetime, webdav_file_pattern, file_url_pattern):
+def upload(
+    local_path: str, lifetime: str, webdav_file_pattern: str, file_url_pattern: str
+) -> Dict:
     """Uploads the given file to the webdav server :)
 
-    :param local_fname: file name of the local file
+    :param local_path: file name of the local file
     :param lifetime: suggested lifetime of the uploaded file
     """
     file_storage = get_passwords()[0]
-    webdav = easywebdav.connect(
-        file_storage.server,
-        username=file_storage.username,
-        password=file_storage.password,
-        protocol=file_storage.protocol,
-    )
-    file_url_dict = get_file_name_dict(local_fname, lifetime, get_version_suffix())
+    file_url_dict = get_file_name_dict(local_path, lifetime, get_version_suffix())
     file_url_dict["protocol"] = file_storage.protocol
     file_url_dict["file_server"] = file_storage.server
     file_url_dict["file_path"] = file_storage.path
     file_url_dict["lifetime"] = lifetime
     file_url_dict["url"] = file_url_pattern.format(**file_url_dict)
 
-    remote_fname = os_join(
-        file_storage.path, quote(webdav_file_pattern.format(**file_url_dict))
+    url = urljoin(
+        f"{file_storage.protocol}://{file_storage.server}",
+        file_storage.path.rstrip("/")
+        + "/"
+        + quote(webdav_file_pattern.format(**file_url_dict)),
     )
-    webdav.upload(local_fname, remote_fname)
+    with open(local_path, "rb") as f:
+        data = f.read()
+        upload_to_webdav(data, url, file_storage.username, file_storage.password)
+
     return file_url_dict
 
 
@@ -113,11 +118,11 @@ def print_notification_message(notification_message, file_url_dict):
 
 
 def setup_webdav_server(
-    default_protocol:str ="https",
-    default_server:str ="localhost",
-    default_port:int =443,
-    default_path: str="/",
-    default_username: str=getenv("USER"),
+    default_protocol: str = "https",
+    default_server: str = "localhost",
+    default_port: int = 443,
+    default_path: str = "/",
+    default_username: str = getenv("USER"),
 ) -> None:
     """
     Setup the webdav server authentification data.
@@ -137,7 +142,7 @@ def setup_webdav_server(
     store_password(username, password, protocol, server, port, path)
 
 
-def archive_files(archive_name:str , file_pattern_list: List[str]):
+def archive_files(archive_name: str, file_pattern_list: List[str]):
     """
     Stores all files listed in file_pattern_list in the archive with
     name archive_name.
@@ -156,18 +161,17 @@ def get_archive_name(filename: str) -> str:
     """
     Computes the archive name based on the given filename.
 
-    :param directory: directory of the archive file
     :param filename: filename of the input file used to compute \
         the archive name
     """
-    filename = filename[:-1] if filename.endswith("/") else filename
+    filename = filename.rstrip("/")
     # base result on the first filename matching pattern; this also prevents
     # wildcards in filenames :)
     archive_name = basename(glob(filename)[0])
     return archive_name
 
 
-def parse_arguments() -> None:
+def parse_arguments():
     """prepares the argument parser"""
     parser = ArgumentParser()
     parser.add_argument("fname", help="File(s) to davify.", nargs="*", default=None)
@@ -247,9 +251,11 @@ def cli() -> None:
             with TemporaryDirectory() as tempdirname:
                 filename = os_join(
                     tempdirname,
-                    args.archive_name
-                    if args.archive_name
-                    else get_archive_name(args.fname[0]) + TAR_FILE_EXT,
+                    (
+                        args.archive_name
+                        if args.archive_name
+                        else get_archive_name(args.fname[0]) + TAR_FILE_EXT
+                    ),
                 )
                 archive_files(filename, args.fname)
                 file_url_dict = upload(
@@ -260,15 +266,16 @@ def cli() -> None:
                 )
 
         if args.hash:
-            sha1 = sha1(open(filename, "rb").read()).hexdigest()
-            sha3 = sha3_224(open(filename, "rb").read()).hexdigest()
-            file_url_dict["hash"] = HASH_PATTERN.format(sha1=sha1, sha3=sha3)
+            sha1_hash = sha1(open(filename, "rb").read()).hexdigest()
+            sha3_hash = sha3_224(open(filename, "rb").read()).hexdigest()
+            file_url_dict["hash"] = HASH_PATTERN.format(sha1=sha1_hash, sha3=sha3_hash)
         else:
             file_url_dict["hash"] = ""
 
         print_notification_message(
             notification_message=MESSAGE, file_url_dict=file_url_dict
         )
+
 
 if __name__ == "__main__":
     cli()
