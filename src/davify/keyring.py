@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Handles access to the WebDAV's server creditentials.
+Handles access to the WebDAV's server credentials.
 """
 
 from collections import namedtuple

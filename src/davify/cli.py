@@ -7,28 +7,28 @@ davify - uploads files to a webdav server for retrieval via https
 
 """
 
-from argparse import ArgumentParser
-from time import strftime
-from os.path import splitext, basename, join as os_join, isdir
-from os import getenv
-from tempfile import TemporaryDirectory
-from glob import glob
-from typing import List, Dict
-from urllib.parse import quote
-from random import choice
-from string import ascii_lowercase, ascii_uppercase, digits
-from shutil import which
-from warnings import warn
-from hashlib import sha3_224, sha1
-
 import sys
 import tarfile
-import fs
+from argparse import ArgumentParser
+from glob import glob
+from hashlib import sha3_224, sha1
+from os import getenv
+from os.path import splitext, basename, join as os_join, isdir
+from random import choice
+from shutil import which
+from string import ascii_lowercase, ascii_uppercase, digits
+from tempfile import TemporaryDirectory
+from time import strftime
+from typing import List, Dict
+from urllib.parse import quote, urljoin
+from warnings import warn
+
 import pyperclip
 
+from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, HASH_PATTERN, MESSAGE
 from davify.keyring import get_passwords, store_password
 from davify.transform import TIME_TO_CHR, VALID_LIFE_TIMES
-from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, HASH_PATTERN, MESSAGE
+from davify.upload import upload_to_webdav
 
 APPLICATION_NAME = "davify"
 TAR_FILE_MODE = "w:xz"
@@ -37,7 +37,8 @@ INT_TO_CHR = ascii_lowercase + ascii_uppercase + digits + "_-"
 
 
 def get_version_suffix() -> str:
-    """Returns a version suffix based on the current time and date."""
+    """
+    :returns: A version suffix based on the current time and date."""
     return strftime("-%d%b-%I%M%p").lower()
 
 
@@ -48,7 +49,7 @@ def get_file_name_dict(
     :param fname: name of the file to davify
     :param file_lifetime: suggested file lifetime in accordance to \
                the available VALID_LIFE_TIMES.
-    :param fname_suffix: optional version_suffix
+    :param version_suffix: a suffix that indicates the file version.
 
     :returns: a filename which follows the following pattern \
           rrrrt-fname-suffix.ext
@@ -88,16 +89,15 @@ def upload(
     file_url_dict["lifetime"] = lifetime
     file_url_dict["url"] = file_url_pattern.format(**file_url_dict)
 
-    remote_path = os_join(
-        file_storage.path, quote(webdav_file_pattern.format(**file_url_dict))
+    url = urljoin(
+        f"{file_storage.protocol}://{file_storage.server}",
+        file_storage.path.rstrip("/")
+        + "/"
+        + quote(webdav_file_pattern.format(**file_url_dict)),
     )
-
-    protocol = "webdavs" if file_storage.protocol == "https" else "webdav"
-    remote_fs = fs.open_fs(
-        f"{protocol}://{file_storage.username}:{file_storage.password}@{file_storage.server}/{file_storage.server}"
-    )
-    with remote_fs.open(remote_path) as remote, open(local_path, "wb") as local:
-        remote.write(local.read())
+    with open(local_path, "rb") as f:
+        data = f.read()
+        upload_to_webdav(data, url, file_storage.username, file_storage.password)
 
     return file_url_dict
 
@@ -161,11 +161,10 @@ def get_archive_name(filename: str) -> str:
     """
     Computes the archive name based on the given filename.
 
-    :param directory: directory of the archive file
     :param filename: filename of the input file used to compute \
         the archive name
     """
-    filename = filename[:-1] if filename.endswith("/") else filename
+    filename = filename.rstrip("/")
     # base result on the first filename matching pattern; this also prevents
     # wildcards in filenames :)
     archive_name = basename(glob(filename)[0])
