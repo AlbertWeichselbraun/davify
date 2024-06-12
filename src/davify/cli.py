@@ -24,6 +24,8 @@ from urllib.parse import quote, urljoin
 from warnings import warn
 
 import pyperclip
+import qrcode
+from qrcode.main import QRCode
 
 from davify.config import FILENAME_PATTERN, FILE_URL_PATTERN, HASH_PATTERN, MESSAGE
 from davify.keyring import get_passwords, store_password
@@ -275,6 +277,9 @@ def cli() -> None:
         print_notification_message(
             notification_message=MESSAGE, file_url_dict=file_url_dict
         )
+        qr = QRCode()
+        qr.add_data(file_url_dict["url"])
+        qr.print_ascii()
 
 
 if __name__ == "__main__":

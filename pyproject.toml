@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "davify"
-version = "1.1.2"
+version = "1.2.0"
 description = "Davify uploads files to webdav servers and provides a download link for accessing them."
 keywords = ["webdav"]
 authors = ["Albert Weichselbraun <albert@weichselbraun.net>"]
@@ -16,8 +16,8 @@ readme = "README.md"
 python = "^3.8 || ^3.9 || ^3.10 || ^3.11 || ^3.12"
 secretstorage = "^3.3.3"
 pyperclip = "^1.8.2"
-requests = "^2.31.0"
-
+requests = "^2.32.2"
+qrcode = "^7.4.2"
 
 
 [tool.poetry.scripts]
